@@ -1,5 +1,6 @@
 import { TaskRepository, TaskFilter } from '../repositories/task.repository';
 import { Task } from '@prisma/client';
+import { NotFoundError } from '../utils/errors';
 
 export class TaskService {
   private taskRepository: TaskRepository;
@@ -10,7 +11,7 @@ export class TaskService {
 
   public async getAllTasks(userId: string, query: any): Promise<{ tasks: Task[]; total: number; page: number; limit: number }> {
     const page = parseInt(query.page as string) || 1;
-    const limit = parseInt(query.limit as string) || 10;
+    const limit = Math.min(parseInt(query.limit as string) || 10, 100); // Prevent potential DoS via large limits
     const skip = (page - 1) * limit;
     const search = query.search as string;
     const completed = query.completed === 'true' ? true : query.completed === 'false' ? false : undefined;
@@ -31,7 +32,7 @@ export class TaskService {
   public async getTaskById(id: string, userId: string): Promise<Task> {
     const task = await this.taskRepository.findById(id, userId);
     if (!task) {
-      throw { status: 404, message: 'Task not found' };
+      throw new NotFoundError('Task not found');
     }
     return task;
   }

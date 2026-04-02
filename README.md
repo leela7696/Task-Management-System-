@@ -40,7 +40,12 @@ The backend follows a **Layered Architecture** to ensure separation of concerns 
 ### Quick Start (Both Backend & Frontend)
 1. Install dependencies for both:
    ```bash
-   npm run install:all
+   ## 👨‍💻 Developed By
+
+**Leela Krishna Sundu**
+- 📱 **Mobile**: +91 6309515519
+- 📧 **Gmail**: leela7696@gmail.com
+- 💻 **Project**: TaskFlow - Production-Grade Task Management System
    ```
 2. Start both in development mode:
    ```bash
