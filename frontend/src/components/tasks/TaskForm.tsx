@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Task } from '@/types';
+import { Task, TaskStatus, Priority } from '@/types';
 import { useTaskStore } from '@/store/taskStore';
-import { X, Loader2, Plus } from 'lucide-react';
+import { X, Loader2, Plus, Edit2, Calendar, Flag, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface TaskFormProps {
@@ -15,6 +15,9 @@ interface TaskFormProps {
 export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<TaskStatus>(TaskStatus.PENDING);
+  const [priority, setPriority] = useState<Priority>(Priority.MEDIUM);
+  const [dueDate, setDueDate] = useState('');
   const [loading, setLoading] = useState(false);
   const { createTask, updateTask } = useTaskStore();
 
@@ -22,9 +25,15 @@ export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps)
     if (taskToEdit) {
       setTitle(taskToEdit.title);
       setDescription(taskToEdit.description || '');
+      setStatus(taskToEdit.status);
+      setPriority(taskToEdit.priority);
+      setDueDate(taskToEdit.dueDate ? new Date(taskToEdit.dueDate).toISOString().split('T')[0] : '');
     } else {
       setTitle('');
       setDescription('');
+      setStatus(TaskStatus.PENDING);
+      setPriority(Priority.MEDIUM);
+      setDueDate('');
     }
   }, [taskToEdit, isOpen]);
 
@@ -34,11 +43,19 @@ export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps)
 
     setLoading(true);
     try {
+      const taskData = { 
+        title, 
+        description, 
+        status, 
+        priority, 
+        dueDate: dueDate || undefined 
+      };
+      
       if (taskToEdit) {
-        await updateTask(taskToEdit.id, { title, description });
+        await updateTask(taskToEdit.id, taskData);
         toast.success('Task updated');
       } else {
-        await createTask({ title, description });
+        await createTask(taskData);
         toast.success('Task created');
       }
       onClose();
@@ -82,10 +99,56 @@ export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps)
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Description (Optional)</label>
             <textarea
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800 placeholder:text-slate-400 min-h-[120px] resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800 placeholder:text-slate-400 min-h-[100px] resize-none"
               placeholder="Add some details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                <Flag className="w-4 h-4 text-slate-400" />
+                Priority
+              </label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as Priority)}
+              >
+                <option value={Priority.LOW}>Low</option>
+                <option value={Priority.MEDIUM}>Medium</option>
+                <option value={Priority.HIGH}>High</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-slate-400" />
+                Status
+              </label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+              >
+                <option value={TaskStatus.PENDING}>Pending</option>
+                <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
+                <option value={TaskStatus.COMPLETED}>Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              Due Date (Optional)
+            </label>
+            <input
+              type="date"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
 
@@ -100,9 +163,9 @@ export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps)
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center disabled:opacity-70"
+              className="flex-[2] px-4 py-3 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : taskToEdit ? 'Update Task' : 'Create Task'}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (taskToEdit ? 'Save Changes' : 'Create Task')}
             </button>
           </div>
         </form>
@@ -110,5 +173,3 @@ export default function TaskForm({ taskToEdit, isOpen, onClose }: TaskFormProps)
     </div>
   );
 }
-
-import { Edit2 } from 'lucide-react';

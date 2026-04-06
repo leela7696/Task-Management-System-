@@ -27,6 +27,8 @@ export const loginValidation = [
 export const taskValidation = [
   body('title').notEmpty().withMessage('Title is required').trim(),
   body('description').optional().isString().trim(),
-  body('completed').optional().isBoolean(),
+  body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'COMPLETED']),
+  body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH']),
+  body('dueDate').optional().isISO8601().toDate(),
   validateRequest,
 ];

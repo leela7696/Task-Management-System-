@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
+import { AppError } from './utils/errors';
 
 dotenv.config();
 
@@ -68,74 +69,7 @@ class App {
 
   private errorHandling(): void {
     // 404 handler
-export class AppError extends Error {
-  public readonly status: number;
-  public readonly isOperational: boolean;
-
-  constructor(message: string, status: number = 500, isOperational: boolean = true) {
-    super(message);
-    this.status = status;
-    this.isOperational = isOperational;
-
-    Object.setPrototypeOf(this, new.target.prototype);
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
-
-export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
-    super(message, 404);
-  }
-}
-
-export class UnauthorizedError extends AppError {
-  constructor(message: string = 'Unauthorized access') {
-    super(message, 401);
-  }
-}
-
-export class BadRequestError extends AppError {
-  constructor(message: string = 'Bad request') {
-    super(message, 400);
-  }
-}# Use Node.js LTS version
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Build Next.js application
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS runner
-
-WORKDIR /app
-
-# Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Expose port
-EXPOSE 3000
-
-# Start the application
-CMD ["npm", "start"]    this.app.use((req: Request, res: Response) => {
+    this.app.use((req: Request, res: Response) => {
       res.status(404).json({ 
         status: 'error',
         message: 'Resource not found' 

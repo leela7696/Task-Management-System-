@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Task, PaginatedTasks } from '../types';
+import { Task, PaginatedTasks, TaskStatus, Priority } from '../types';
 import api from '../lib/api';
 
 interface TaskState {
@@ -9,14 +9,16 @@ interface TaskState {
   limit: number;
   isLoading: boolean;
   search: string;
-  completed: boolean | undefined;
+  status: TaskStatus | undefined;
+  priority: Priority | undefined;
   fetchTasks: (query?: any) => Promise<void>;
   createTask: (data: Partial<Task>) => Promise<void>;
   updateTask: (id: string, data: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
-  toggleTask: (id: string) => Promise<void>;
+  updateTaskStatus: (id: string, status: TaskStatus) => Promise<void>;
   setSearch: (search: string) => void;
-  setCompleted: (completed: boolean | undefined) => void;
+  setStatus: (status: TaskStatus | undefined) => void;
+  setPriority: (priority: Priority | undefined) => void;
   setPage: (page: number) => void;
 }
 
@@ -27,17 +29,19 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   limit: 10,
   isLoading: false,
   search: '',
-  completed: undefined,
+  status: undefined,
+  priority: undefined,
 
   fetchTasks: async (query = {}) => {
     set({ isLoading: true });
     try {
-      const { page, search, completed, limit } = get();
+      const { page, search, status, priority, limit } = get();
       const params = {
         page: query.page || page,
         limit: query.limit || limit,
         search: query.search !== undefined ? query.search : search,
-        completed: query.completed !== undefined ? query.completed : completed,
+        status: query.status !== undefined ? query.status : status,
+        priority: query.priority !== undefined ? query.priority : priority,
       };
 
       const response = await api.get<PaginatedTasks>('/tasks', { params });
@@ -81,12 +85,12 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  toggleTask: async (id) => {
+  updateTaskStatus: async (id, status) => {
     try {
-      await api.patch(`/tasks/${id}/toggle`);
+      await api.patch(`/tasks/${id}/status`, { status });
       await get().fetchTasks();
     } catch (error) {
-      console.error('Failed to toggle task', error);
+      console.error('Failed to update task status', error);
     }
   },
 
@@ -95,9 +99,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     get().fetchTasks({ search, page: 1 });
   },
 
-  setCompleted: (completed) => {
-    set({ completed, page: 1 });
-    get().fetchTasks({ completed, page: 1 });
+  setStatus: (status) => {
+    set({ status, page: 1 });
+    get().fetchTasks({ status, page: 1 });
+  },
+
+  setPriority: (priority) => {
+    set({ priority, page: 1 });
+    get().fetchTasks({ priority, page: 1 });
   },
 
   setPage: (page) => {

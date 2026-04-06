@@ -1,5 +1,6 @@
 import { TaskRepository, TaskFilter } from '../repositories/task.repository';
 import { Task } from '@prisma/client';
+import { TaskStatus, Priority } from '../types/enums';
 import { NotFoundError } from '../utils/errors';
 
 export class TaskService {
@@ -11,14 +12,16 @@ export class TaskService {
 
   public async getAllTasks(userId: string, query: any): Promise<{ tasks: Task[]; total: number; page: number; limit: number }> {
     const page = parseInt(query.page as string) || 1;
-    const limit = Math.min(parseInt(query.limit as string) || 10, 100); // Prevent potential DoS via large limits
+    const limit = Math.min(parseInt(query.limit as string) || 10, 100);
     const skip = (page - 1) * limit;
     const search = query.search as string;
-    const completed = query.completed === 'true' ? true : query.completed === 'false' ? false : undefined;
+    const status = query.status as TaskStatus;
+    const priority = query.priority as Priority;
 
     const filter: TaskFilter = {
       userId,
-      completed,
+      status,
+      priority,
       search,
       skip,
       take: limit,
@@ -38,8 +41,13 @@ export class TaskService {
   }
 
   public async createTask(userId: string, data: any): Promise<Task> {
+    const { title, description, status, priority, dueDate } = data;
     return this.taskRepository.create({
-      ...data,
+      title,
+      description,
+      status: status || TaskStatus.PENDING,
+      priority: priority || Priority.MEDIUM,
+      dueDate: dueDate ? new Date(dueDate) : null,
       user: { connect: { id: userId } },
     });
   }
@@ -47,6 +55,11 @@ export class TaskService {
   public async updateTask(id: string, userId: string, data: any): Promise<Task> {
     // Check if task exists and belongs to user
     await this.getTaskById(id, userId);
+    
+    if (data.dueDate) {
+      data.dueDate = new Date(data.dueDate);
+    }
+
     return this.taskRepository.update(id, userId, data);
   }
 
@@ -56,7 +69,9 @@ export class TaskService {
     await this.taskRepository.delete(id, userId);
   }
 
-  public async toggleTaskCompletion(id: string, userId: string): Promise<Task> {
-    return this.taskRepository.toggleCompletion(id, userId);
+  public async updateTaskStatus(id: string, userId: string, status: TaskStatus): Promise<Task> {
+    // Check if task exists and belongs to user
+    await this.getTaskById(id, userId);
+    return this.taskRepository.updateStatus(id, userId, status);
   }
 }

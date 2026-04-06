@@ -48,6 +48,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        
+        // Use a dynamic import or window event to avoid circular dependency
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }

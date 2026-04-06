@@ -5,11 +5,25 @@ export interface User {
   createdAt: string;
 }
 
+export enum TaskStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+}
+
+export enum Priority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  completed: boolean;
+  status: TaskStatus;
+  priority: Priority;
+  dueDate?: string;
   userId: string;
   createdAt: string;
   updatedAt: string;

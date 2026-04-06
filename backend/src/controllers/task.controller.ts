@@ -61,11 +61,12 @@ export class TaskController {
     }
   };
 
-  public toggle = async (req: Request, res: Response, next: NextFunction) => {
+  public updateStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = (req as any).user;
       const id = req.params.id as string;
-      const task = await this.taskService.toggleTaskCompletion(id, userId);
+      const { status } = req.body;
+      const task = await this.taskService.updateTaskStatus(id, userId, status);
       res.status(200).json(task);
     } catch (error) {
       next(error);

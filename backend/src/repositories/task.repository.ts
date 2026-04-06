@@ -1,9 +1,11 @@
 import { PrismaClient, Task, Prisma } from '@prisma/client';
+import { TaskStatus, Priority } from '../types/enums';
 import prisma from '../config/prisma';
 
 export interface TaskFilter {
   userId: string;
-  completed?: boolean;
+  status?: TaskStatus;
+  priority?: Priority;
   search?: string;
   skip?: number;
   take?: number;
@@ -17,21 +19,25 @@ export class TaskRepository {
   }
 
   public async findAll(filter: TaskFilter): Promise<{ tasks: Task[]; total: number }> {
-    const { userId, completed, search, skip = 0, take = 10 } = filter;
+    const { userId, status, priority, search, skip = 0, take = 10 } = filter;
 
     const where: Prisma.TaskWhereInput = {
       userId,
     };
 
-    if (completed !== undefined) {
-      where.completed = completed;
+    if (status) {
+      where.status = status;
+    }
+
+    if (priority) {
+      where.priority = priority;
     }
 
     if (search) {
-      where.title = {
-        contains: search,
-        mode: 'insensitive',
-      };
+      where.OR = [
+        { title: { contains: search } },
+        { description: { contains: search } },
+      ];
     }
 
     const [tasks, total] = await Promise.all([
@@ -70,15 +76,10 @@ export class TaskRepository {
     });
   }
 
-  public async toggleCompletion(id: string, userId: string): Promise<Task> {
-    const task = await this.findById(id, userId);
-    if (!task) {
-      throw { status: 404, message: 'Task not found' };
-    }
-
+  public async updateStatus(id: string, userId: string, status: TaskStatus): Promise<Task> {
     return this.prisma.task.update({
       where: { id, userId },
-      data: { completed: !task.completed },
+      data: { status },
     });
   }
 }

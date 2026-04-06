@@ -14,6 +14,6 @@ router.post('/', taskValidation, taskController.create);
 router.get('/:id', taskController.getById);
 router.patch('/:id', taskValidation, taskController.update);
 router.delete('/:id', taskController.delete);
-router.patch('/:id/toggle', taskController.toggle);
+router.patch('/:id/status', taskController.updateStatus);
 
 export default router;
